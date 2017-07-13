@@ -1,0 +1,811 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta name="viewport" content="initial-scale=1.0">
+    <meta charset="utf-8">
+    <title>TGSV</title>
+    <style>
+      html, body {
+        height: 100%;
+        margin: 0;
+        padding: 0;
+      }
+      #map {
+        height: 100%;
+      }
+      #viewToggle {
+        position: fixed;
+        top: 1%;
+        right: 14%;
+        z-index: 5;
+        background-color: #fff;
+        border: 1px solid #999;
+        text-align: center;
+        font-family: 'Roboto','sans-serif';
+        line-height: 20px;
+        margin-right: -100px;
+      }
+      #left {
+        position: fixed;
+        top: 1%;
+        right: 22%;
+        z-index: 5;
+        background-color: #fff;
+        border: 1px solid #999;
+        text-align: center;
+        font-family: 'Roboto','sans-serif';
+        line-height: 20px;
+        margin-right: -100px;
+      }
+      #right {
+        position: fixed;
+        top: 1%;
+        right: 10%;
+        z-index: 5;
+        background-color: #fff;
+        border: 1px solid #999;
+        text-align: center;
+        font-family: 'Roboto','sans-serif';
+        line-height: 20px;
+        margin-right: -100px;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="viewToggle">
+      <input type="button" value="Street View" onclick="toggleStreetView();"></input>
+    </div>
+    <div id="left">
+      <input type="button" value="<--" onclick="left();"></input>
+    </div>
+    <div id="right">
+      <input type="button" value="-->" onclick="right();"></input>
+    </div>
+    <div id="map"></div>
+    <script>
+      var streetPos = 1;
+      var panorama;
+
+      var locations = [
+/*!1*/     {lat: -27.56534, lng: 151.96866},
+/*2*/     {lat: -27.56502, lng: 151.96654},
+/*3*/     {lat: -27.56354, lng: 151.96661},
+/*!4*/     {lat: -27.5638, lng: 151.96787},
+/*5*/     {lat: -27.56425, lng: 151.96845},
+/*6*/     {lat:-27.56389, lng: 151.97093},
+/*7*/     {lat: -27.5641, lng: 151.97098},
+/*!8        */{lat: -27.5643, lng: 151.97103},
+/*!9*/     {lat: -27.56429, lng: 151.97085},
+/*10*/    {lat: -27.56441, lng: 151.97048},
+/*11*/    {lat: -27.56526, lng: 151.9705},
+/*12*/    {lat: -27.56638, lng: 151.97026},
+/*13*/    {lat: -27.5644, lng: 151.96999},
+/*14*/    {lat: -27.56468, lng: 151.96991},
+/*15*/    {lat: -27.56492, lng: 151.96981},
+/*16*/    {lat: -27.56478, lng: 151.96955},
+/*!17*/    {lat: -27.56509, lng: 151.9691},
+/*!18*/    {lat: -27.56515, lng: 151.96943},
+/*19        */{lat: -27.56385, lng: 151.97007},
+/*20*/    {lat: -27.5653, lng: 151.96988},
+/*21*/    {lat: -27.56558, lng: 151.96974},
+/*22*/    {lat: -27.56579, lng: 151.96866},
+/*23*/    {lat: -27.56547, lng: 151.96932},
+/*!24*/   {lat: -27.56524, lng: 151.96877},
+/*25*/    {lat: -27.56489, lng: 151.96778},
+/*26*/    {lat: -27.5652, lng: 151.96968},
+/*27        */{lat: -27.56594, lng: 151.96967},
+/*28*/    {lat: -27.56618, lng: 151.96959},
+/*29*/    {lat: -27.56607, lng: 151.96927},
+/*30*/    {lat: -27.56566, lng: 151.96879},
+/*31*/    {lat: -27.56563, lng: 151.9686},
+/*!32*/    {lat: -27.56598, lng: 151.96851},
+/*33*/
+/*!34*/    {lat: -27.56653, lng: 151.96796},
+/*!35        */{lat: -27.56605, lng: 151.96811},
+/*!36*/    {lat: -27.56638, lng: 151.96688},
+/*!37*/    {lat: -27.56636, lng: 151.96654},
+/*!38        */{lat: -27.56488, lng: 151.96935},
+/*!39*/    {lat: -27.56588, lng: 151.96756},
+/*40         */{lat: -27.5632, lng: 151.96754},
+/*!41        */{lat: -27.56343, lng: 151.96793},
+/*!42        */{lat: -27.56588, lng: 151.96593},
+/*43*/    {lat: -27.56579, lng: 151.96894},
+/*!44*/    {lat: -27.56671, lng: 151.96943},
+/*!45*/    {lat: -27.56549, lng: 151.96851},
+/*!46*/    {lat: -27.56342, lng: 151.96794},
+/*47*/    {lat: -27.56555, lng: 151.96951},
+/*48*/    {lat: -27.56575, lng: 151.96903},
+/*49         */{lat: 0, lng: 0},
+/*!50        */{lat: -27.56577, lng: 151.96641},
+/*51         */{lat: -27.56456, lng: 151.97085},
+/*52         */{lat: -27.56577, lng: 151.96641}
+//15 to go
+      ];
+
+
+      function initMap() {
+        var map = new google.maps.Map(document.getElementById('map'), {
+          zoom: 17,
+          center: {lat: -27.564941, lng: 151.968422},
+          mapTypeId: 'satellite',
+          mapTypeControl: true,
+          mapTypeControlOptions: {
+              style: google.maps.MapTypeControlStyle.DROPDOWN_MENU,
+              mapTypeIds: ['satellite', 'hybrid'],
+              position: google.maps.ControlPosition.TOP_CENTER
+          },
+          zoomControl: true,
+          zoomControlOptions: {
+              position: google.maps.ControlPosition.LEFT_CENTER
+          },
+          streetViewControl: true,
+          fullscreenControl: true,
+          fullscreenControlOptions: {
+              position: google.maps.ControlPosition.LEFT_TOP
+          }
+        });
+
+        //InfoWindow content
+        var content = {
+/*1*/     Admin: "<p>The school\'s reception and administration are si"+
+          "tuated in this heritage-listed building, which was designed by Wi"+
+          "llboughby Powell in the 'Domestic Gothic' style and completed in "+
+          "1876. The second floor was originally the school hospital and the"+
+          "sole boarding house, however, it has been renovated multiple time"+
+          "s to now house staff rooms and administration facilities, includi"+
+          "ng the Headmaster\'s office.</p>",
+/*2*/     MillsOval: '<p>This oval is one of the most picturesque in Queensl'+
+          'and, and is used for many sports. In summer, it is the main crick'+
+          'et oval and hosts 1st XI matches. It was named for Mr R.L. Mills,'+
+          ' Headmaster from 1948-56.</p>',
+/*3*/     BarbourOval: '<p>This oval is used for a wide variety of sports, a'+
+          'nd was named for Mr G.P. Barbour, Headmaster from 1910-35.</p>',
+/*4*/     WoodfordSheds: '<p>Built in 1975 to provide sports store rooms and'+
+          ' change rooms, the Woodford Sheds were named for Mr Woodford, the'+
+          ' caretaker who lived in the old army shed until 1963.</p>',
+/*5*/     OldBoysOval: '<p>Widely regarded as the “main” oval, Old Boy\'s Ov'+
+          'al is the pride of the school, and is the venue for many sports. '+
+          'In Term 2 it is the main football oval and in Term 3 it hosts 1st'+
+          ' XV home matches. Some games can attract crowds of up to 5,000 sp'+
+          'ectators, which the Terraces and manicured embankments provide am'+
+          'ple room for.</p>',
+/*6*/     BoyceTaylorBoarding: '<p>The combined Boyce and Taylor Boarding Ho'+
+          'use was opened in January 2016. The building can accommodate 130 '+
+          'boys and also includes accommodation for Housemasters and Assista'+
+          'nt Housemasters.</p>',
+/*7*/     DTCentre: '<p>Built in 1959 and currently under conversion into cl'+
+          'assrooms, Industrial Design & Technology'+
+          's will be taught at this centre.</p>',
+/*9*/     DTCentre2: '<p>Built in 1959 and currently under conversion into c'+
+          'lassrooms, Engineering and Robotics will be taught at this centre'+
+          '.</p>',
+/*10*/    MackintoshBoarding: '<p>Opened in 2013, boarders in Mackintosh wer'+
+          'e formerly housed in the heritage listed School House.</p>',
+/*11*/    KentOval: '<p>A multipurpose oval used for a variety of sports, Ke'+
+          'nt Oval was named for Mr H.R. Kent, Old Boy and Deputy Chairman o'+
+          'f the School’s Board of Trustees in the 1960s.</p>',
+/*12*/    TrusteesOval: '<p>Named in recognition of the voluntary and tirele'+
+          'ss efforts of the school’s Board of Trustees since the establishm'+
+          'ent of the school in 1875.</p>',
+/*13*/    ArtnDrama: '<p>This building forms the core of the school\'s art a'+
+          'nd drama program.</p>',
+/*14*/    Roberts: '<p>Built in 1971, Roberts block was named for Dr H.E. Ro'+
+          'berts, Headmaster from 1936-47. It currently houses the school\'s'+
+          ' Geography and Business Faculties.</p>',
+/*15*/    OBlock: '<p>Constructed alongside the Heenan science facility, O B'+
+          'lock contains three computer labs and a biology classroom.</p>',
+/*16*/    Heenan: '<p>The Heenan science laboratories were built in 1993, an'+
+          'were named for Mr L.T. Heenan, Headmaster from 1956-61.</p>',
+/*17*/    Library: '<p>The school library, completed in 1989, houses a large'+
+          ' collection of both fiction and non-fiction, as well as private s'+
+          'tudy rooms and research facilities. It was named for Mr W.M. Dent'+
+          ', Headmaster from 1970-91.</p>',
+/*18*/    AssemblyHall: '<p>Built in 1964, the Assembly Hall is the central '+
+          'meeting place of the school, and is used to conduct senior school'+
+          ' assemblies every Thursday afternoon, as well as provide an area '+
+          'for large examinations. The main stage is also used by the Arts D'+
+          'epartment for many different performances.</p>',
+/*20*/    Purves: '<p>Built in 1975 and named after Mr W.A. Purves, Headmast'+
+          'er from 1901-10, the Purves Classrooms house the senior English a'+
+          'nd History faculties.</p>',
+/*21*/    Barbour: '<p>Built in 1981 and named after Mr G.P. Barbour, Headma'+
+          'ster from 1910-35, the Barbour Classrooms house the senior Mathem'+
+          'atics and Language faculties.</p>',
+/*22*/    UniformShop: '<p>The Uniform Shop and Book Pool provide school uni'+
+          'forms and textbooks to students, from both the junior and senior '+
+          'schools.</p>',
+/*23*/    Baynes: '<p>The original arts classroom, Baynes is currently used '+
+          'for music lessons and orchestral rehearsals.</p>',
+/*24*/    SchoolHouse: '<p>The School\'s first ever building, School House s'+
+          'erved as classrooms, boarding facilities and teacher\'s residence'+
+          's.</p>',
+/*25*/    Pavilion: '<p>The Pavilion, situated next to Old Boy\'s Oval, has '+
+          'a canteen, meeting room and kitchen, and also houses a substantia'+
+          'l collection of trophies. The wide balcony provides a sweeping vi'+
+          'ew of Mills Oval, and is frequently used on Saturdays to watch th'+
+          'e many sports games played nearby. It was originally built in 199'+
+          '5, but a major extension to the building was constructed in 2012.'+
+          '</p>',
+/*26*/    ParentsCover: '<p>Built in 1987 and funded by The Parents and Frie'+
+          'nds of the School, the Parent\'s Cover provides a large shaded ar'+
+          'ea in the school centre for boys to relax during lunchtime.</p>',
+/*28*/    HPEBlock: '<p>Used for the storage of equipment and HPE Theory les'+
+          'sons, the HPE demountables will be replaced when the new gym is c'+
+          'ompleted.</p>',
+/*29*/    TrenerryGym: '<p>Incorporating a full-size basketball court and ch'+
+          'ange rooms, the Trenerry Gymnasium is also used for futsal and vo'+
+          'lleyball.</p>',
+/*30*/    DiningHall: '<p>The Dining Hall provides catoring facilities for t'+
+          'he School\'s boarders.</p>',
+/*31*/    Museum: '<p>The School\'s official museum houses important items f'+
+          'rom the School\'s past, including blazers from famous Old Boys an'+
+          'd artifacts.</p>',
+/*32*/    HealthCentre: '<p>Named for Dr J.M. Blaikie, Board of Trustees Cha'+
+          'irman from 1990-99, the Blaikie Health Centre provides medical ai'+
+          'd to boys during school hours, and 24/7 support for boarders.</p>',
+/*33*/    JuniorSchool: '<p>The Junior School campus provides primary educat'+
+          'ion designed for boys, and features large, open play areas and st'+
+          'ate-of-the-art facilities.</p>',
+/*35*/    StephensBoardingHouse: '<p>Stephens Boarding House was built in 19'+
+          '87 and named for Mr S.G. Stephens, first Secretary to the Board o'+
+          'f Trustees (1874-1901) and one of the Founders of the School. It '+
+          'currently houses boarders from Stephens House.</p>',
+/*36*/    GroomBoardingHouse: '<p>Named for Sir Littleton Groom, one of the '+
+          'School\'s more distinguished Old Boys, this boarding house caters'+
+          ' to boarders from Groom House.</p>',
+/*38*/    CorfeBoardingHouse: '<p>Opened in 2015, the Corfe Boarding House c'+
+          'aters to Junior School and Year 7 boarders.</p>',
+/*42*/    HughRose: '<p>Completed in 2001 and named for Headmaster H.A. Rose'+
+          ', the Hugh Rose building contains classrooms for Year 7 and Year '+
+          '8 students.</p>',
+/*43*/    AquaticCentre: '<p>Completed in 2010 to replace the open-air swimm'+
+          'ing pool formerly situated at the current basketball court, the A'+
+          'quatic Centre features an indoor heated 10-lane pool for boys to '+
+          'train, and a smaller toddler pool for community use.</p>',
+/*44*/    OldHall: '<p>The original school assembly hall, Old Hall houses th'+
+          'e School\'s trophy collection and honour boards, including the WW'+
+          'I and II honour boards of the old boys who made the ultimate sacr'+
+          'ifice.</p>',
+/*45*/    TennisCourts: '<p>The school\'s eight full-size tennis courts are '+
+          'used to host GPS and local matches, as well as providing a traini'+
+          'ng area for the tennis program. All eight are flood lit for eveni'+
+          'ng use by boys.</p>',
+/*46*/    BasketballCourts: '<p>Originally the School\'s swimming pool, this'+
+          ' area was converted to a basketball court after the completion of'+
+          ' the Aquatic Centre.</p>',
+/*47*/    LearningLab: '<p>A special classroom constructed to investigate ne'+
+          'w teaching techniques, the Learning Laboratory contains the lates'+
+          't in teaching technology.</p>'
+        }
+
+        var icons = {
+          Oval: 'http://blinkeyewear.ca/wp-content/themes/blinkeyewear/img/w'+
+          's-marker.png',
+          Tennis: 'https://upload.wikimedia.org/wikipedia/commons/0/0e/Farm-'+
+          'Fresh_sport_tennis.png',
+          You: 'http://firstsail.org/wp-content/uploads/2015/11/yellow-mark.'+
+          'png'
+        }
+
+        var markers = [
+/*1*/          'Admin Block',
+/*2*/          'Mills Oval',
+/*3*/          'Barbour Oval',
+/*4*/          'Woodford Sheds',
+/*5*/          'Old Boy\'s Oval',
+/*6*/          'Boyce and Taylor Boarding House',
+/*7*/          'Design and Technology Centre #1',
+/*8*/              'Kent Residence',
+/*9*/          'Design and Technology Centre #2',
+/*10*/         'Mackintosh Boarding House',
+/*11*/         'Kent Oval',
+/*12*/         'Trustees Oval',
+/*13*/         'Art and Drama Block',
+/*14*/         'Roberts Block',
+/*15*/         'O Block',
+/*16*/         'Heenan Block',
+/*17*/         'Library',
+/*18*/         'Assembly Hall',
+/*19*/             'Bus Shelter',
+/*20*/         'Purves Block',
+/*21*/         'Barbour Block',
+/*22*/         'Uniform Shop',
+/*23*/         'Baynes Block',
+/*24*/         'School House',
+/*25*/         'Pavilion',
+/*26*/         'Parent\'s Cover',
+/*27*/             'Old Design and Technology Centre',
+/*28*/         'HPE Block',
+/*29*/         'Trenerry Gymnasium',
+/*30*/         'Boarder\'s Dining Hall',
+/*31*/         'School Museum',
+/*32*/         'Blaikie Health Centre',
+/*33*/         'Junior School',
+/*34*/             'Headmaster\'s Residence',
+/*35*/         'Stephens Boarding House',
+/*36*/         'Groom Boarding House',
+/*37*/             'IT Office',
+/*38*/         'Corfe Boarding House',
+/*39*/             'Work Sheds',
+/*40*/             'Tennis Pavilion',
+/*41*/             'Mills Residence',
+/*42*/         'Hugh Rose Block',
+/*43*/         'Aquatic Centre',
+/*44*/         'Old Hall',
+/*45*/         'Tennis Courts',
+/*46*/         'Basketball Courts',
+/*47*/         'Learning Laboratory'
+        ];
+
+
+        var Admin = new google.maps.Marker({
+          position: locations[0],
+          map: map,
+          title: markers[0]
+        });
+
+        var MillsOval = new google.maps.Marker({
+          position: locations[1],
+          map: map,
+          title: markers[1],
+          icon: icons.Oval
+        });
+
+        var BarbourOval = new google.maps.Marker({
+          position: locations[2],
+          map: map,
+          title: markers[2],
+          icon: icons.Oval
+        });
+
+        var WoodfordSheds = new google.maps.Marker({
+          position: locations[3],
+          map: map,
+          title: markers[3],
+        });
+
+        var OldBoysOval = new google.maps.Marker({
+          position: locations[4],
+          map: map,
+          title: markers[4],
+          icon: icons.Oval
+        });
+
+        var BoyceTaylorBoarding = new google.maps.Marker({
+          position: locations[5],
+          map: map,
+          title: markers[5]
+        });
+
+        var DTCentre = new google.maps.Marker({
+          position: locations[6],
+          map: map,
+          title: markers[6]
+        });
+
+        var DTCentre2 = new google.maps.Marker({
+          position: locations[8],
+          map: map,
+          title: markers[8]
+        });
+
+        var MackintoshBoarding = new google.maps.Marker({
+          position: locations[9],
+          map: map,
+          title: markers[9]
+        });
+
+        var KentOval = new google.maps.Marker({
+          position: locations[10],
+          map: map,
+          title: markers[10],
+          icon: icons.Oval
+        });
+
+        var TrusteesOval = new google.maps.Marker({
+          position: locations[11],
+          map: map,
+          title: markers[11],
+          icon: icons.Oval
+        });
+
+        var ArtnDrama = new google.maps.Marker({
+          position: locations[12],
+          map: map,
+          title: markers[12]
+        });
+
+        var Roberts = new google.maps.Marker({
+          position: locations[13],
+          map: map,
+          title: markers[13]
+        });
+
+        var OBlock = new google.maps.Marker({
+          position: locations[14],
+          map: map,
+          title: markers[14]
+        });
+
+        var Heenan = new google.maps.Marker({
+          position: locations[15],
+          map: map,
+          title: markers[15]
+        });
+
+        var Library = new google.maps.Marker({
+          position: locations[16],
+          map: map,
+          title: markers[16]
+        });
+
+        var AssemblyHall = new google.maps.Marker({
+          position: locations[17],
+          map: map,
+          title: markers[17]
+        });
+
+        var Purves = new google.maps.Marker({
+          position: locations[19],
+          map: map,
+          title: markers[19]
+        });
+
+        var Barbour = new google.maps.Marker({
+          position: locations[20],
+          map: map,
+          title: markers[20]
+        });
+
+        var UniformShop = new google.maps.Marker({
+          position: locations[21],
+          map: map,
+          title: markers[21]
+        });
+
+        var Baynes = new google.maps.Marker({
+          position: locations[22],
+          map: map,
+          title: markers[22]
+        });
+
+        var SchoolHouse = new google.maps.Marker({
+          position: locations[23],
+          map: map,
+          title: markers[23]
+        });
+
+        var Pavilion = new google.maps.Marker({
+          position: locations[24],
+          map: map,
+          title: markers[24]
+        });
+
+        var ParentsCover = new google.maps.Marker({
+          position: locations[25],
+          map: map,
+          title: markers[25]
+        });
+
+        var HPEBlock = new google.maps.Marker({
+          position: locations[27],
+          map: map,
+          title: markers[27]
+        });
+
+        var TrenerryGym = new google.maps.Marker({
+          position: locations[28],
+          map: map,
+          title: markers[28]
+        });
+
+        var DiningHall = new google.maps.Marker({
+          position: locations[29],
+          map: map,
+          title: markers[29]
+        });
+
+        var Museum = new google.maps.Marker({
+          position: locations[30],
+          map: map,
+          title: markers[30]
+        });
+
+        var HealthCentre = new google.maps.Marker({
+          position: locations[31],
+          map: map,
+          title: markers[31]
+        });
+
+        var JuniorSchool = new google.maps.Marker({
+          position: locations[32],
+          map: map,
+          title: markers[32]
+        });
+
+        var StephensBoardingHouse = new google.maps.Marker({
+          position: locations[34],
+          map: map,
+          title: markers[34]
+        });
+
+        var GroomBoardingHouse = new google.maps.Marker({
+          position: locations[35],
+          map: map,
+          title: markers[35]
+        });
+
+        var CorfeBoardingHouse = new google.maps.Marker({
+          position: locations[37],
+          map: map,
+          title: markers[37]
+        });
+
+        var HughRose = new google.maps.Marker({
+          position: locations[41],
+          map: map,
+          title: markers[41]
+        });
+
+        var AquaticCentre = new google.maps.Marker({
+          position: locations[42],
+          map: map,
+          title: markers[42]
+        });
+
+        var OldHall = new google.maps.Marker({
+          position: locations[43],
+          map: map,
+          title: markers[43]
+        });
+
+        var TennisCourts = new google.maps.Marker({
+          position: locations[44],
+          map: map,
+          title: markers[44],
+          icon: icons.Tennis
+        });
+
+        var BasketballCourts = new google.maps.Marker({
+          position: locations[45],
+          map: map,
+          title: markers[45]
+        });
+
+        var LearningLab = new google.maps.Marker({
+          position: locations[46],
+          map: map,
+          title: markers[46]
+        });
+
+
+
+
+        function addInfoWindow(building, title, info) {
+          building.InfoWindow = new google.maps.InfoWindow({
+            content: '<div id="content">'+'<div id="siteNotice">'+'</div>'+
+            '<h1 id="firstHeading" class="firstHeading">'+title+'</h1>'+
+            '<div id "bodyContent">'+info+'</div>'+'</div>',
+            maxWidth: 200
+          });
+        }
+
+        addInfoWindow(Admin, markers[0], content.MillsOval);
+        addInfoWindow(MillsOval, markers[1], content.MillsOval);
+        addInfoWindow(BarbourOval, markers[2], content.BarbourOval);
+        addInfoWindow(WoodfordSheds, markers[3], content.WoodfordSheds);
+        addInfoWindow(OldBoysOval, markers[4], content.OldBoysOval);
+        addInfoWindow(BoyceTaylorBoarding, markers[5], content.BoyceTaylorBoarding);
+        addInfoWindow(DTCentre, markers[6], content.DTCentre);
+        addInfoWindow(DTCentre2, markers[8], content.DTCentre2);
+        addInfoWindow(MackintoshBoarding, markers[9], content.MackintoshBoarding);
+        addInfoWindow(KentOval, markers[10], content.KentOval);
+        addInfoWindow(TrusteesOval, markers[11], content.TrusteesOval);
+        addInfoWindow(ArtnDrama, markers[12], content.ArtnDrama);
+        addInfoWindow(Roberts, markers[13], content.Roberts);
+        addInfoWindow(OBlock, markers[14], content.OBlock);
+        addInfoWindow(Heenan, markers[15], content.Heenan);
+        addInfoWindow(Library, markers[16], content.Library);
+        addInfoWindow(AssemblyHall, markers[17], content.AssemblyHall);
+        addInfoWindow(Purves, markers[19], content.Purves);
+        addInfoWindow(Barbour, markers[20], content.Barbour);
+        addInfoWindow(UniformShop, markers[21], content.UniformShop);
+        addInfoWindow(Baynes, markers[22], content.Baynes);
+        addInfoWindow(SchoolHouse, markers[23], content.SchoolHouse);
+        addInfoWindow(Pavilion, markers[24], content.Pavilion);
+        addInfoWindow(ParentsCover, markers[25], content.ParentsCover);
+        addInfoWindow(HPEBlock, markers[27], content.HPEBlock);
+        addInfoWindow(TrenerryGym, markers[28], content.TrenerryGym);
+        addInfoWindow(DiningHall, markers[29], content.DiningHall);
+        addInfoWindow(Museum, markers[30], content.Museum);
+        addInfoWindow(HealthCentre, markers[31], content.HealthCentre);
+        addInfoWindow(JuniorSchool, markers[32], content.JuniorSchool);
+        addInfoWindow(StephensBoardingHouse, markers[34], content.StephensBoardingHouse);
+        addInfoWindow(GroomBoardingHouse, markers[35], content.GroomBoardingHouse);
+        addInfoWindow(CorfeBoardingHouse, markers[37], content.CorfeBoardingHouse);
+        addInfoWindow(HughRose, markers[41], content.HughRose);
+        addInfoWindow(AquaticCentre, markers[42], content.AquaticCentre);
+        addInfoWindow(OldHall, markers[43], content.OldHall);
+        addInfoWindow(TennisCourts, markers[44], content.TennisCourts);
+        addInfoWindow(BasketballCourts, markers[45], content.BasketballCourts);
+        addInfoWindow(LearningLab, markers[46], content.LearningLab);
+
+
+
+
+        function closeInfoWindows() {
+          Admin.InfoWindow.close(map, Admin);
+          MillsOval.InfoWindow.close(map, MillsOval);
+          BarbourOval.InfoWindow.close(map, BarbourOval);
+          WoodfordSheds.InfoWindow.close(map, WoodfordSheds);
+          OldBoysOval.InfoWindow.close(map, OldBoysOval);
+          BoyceTaylorBoarding.InfoWindow.close(map, BoyceTaylorBoarding);
+          DTCentre.InfoWindow.close(map, DTCentre);
+          DTCentre2.InfoWindow.close(map, DTCentre2);
+          MackintoshBoarding.InfoWindow.close(map, MackintoshBoarding);
+          KentOval.InfoWindow.close(map, KentOval);
+          TrusteesOval.InfoWindow.close(map, TrusteesOval);
+          ArtnDrama.InfoWindow.close(map, ArtnDrama);
+          Roberts.InfoWindow.close(map, Roberts);
+          OBlock.InfoWindow.close(map, OBlock);
+          Heenan.InfoWindow.close(map, Heenan);
+          Library.InfoWindow.close(map, Library);
+          AssemblyHall.InfoWindow.close(map, AssemblyHall);
+          Purves.InfoWindow.close(map, Purves);
+          Barbour.InfoWindow.close(map, Barbour);
+          UniformShop.InfoWindow.close(map, UniformShop);
+          Baynes.InfoWindow.close(map, Baynes);
+          SchoolHouse.InfoWindow.close(map, SchoolHouse);
+          Pavilion.InfoWindow.close(map, Pavilion);
+          ParentsCover.InfoWindow.close(map, ParentsCover);
+          HPEBlock.InfoWindow.close(map, HPEBlock);
+          TrenerryGym.InfoWindow.close(map, TrenerryGym);
+          DiningHall.InfoWindow.close(map, DiningHall);
+          Museum.InfoWindow.close(map, Museum);
+          HealthCentre.InfoWindow.close(map, HealthCentre);
+          JuniorSchool.InfoWindow.close(map, JuniorSchool);
+          StephensBoardingHouse.InfoWindow.close(map, StephensBoardingHouse);
+          GroomBoardingHouse.InfoWindow.close(map, GroomBoardingHouse);
+          CorfeBoardingHouse.InfoWindow.close(map, CorfeBoardingHouse);
+          HughRose.InfoWindow.close(map, HughRose);
+          AquaticCentre.InfoWindow.close(map, AquaticCentre);
+          OldHall.InfoWindow.close(map, OldHall);
+          TennisCourts.InfoWindow.close(map, TennisCourts);
+          BasketballCourts.InfoWindow.close(map, BasketballCourts);
+          LearningLab.InfoWindow.close(map, LearningLab);
+        }
+
+
+
+        function addClick(building) {
+          building.addListener('click', function() {
+            closeInfoWindows();
+            building.InfoWindow.open(map, building);
+            streetPos = markers.indexOf(building.title);
+            console.log(streetPos);
+          });
+        }
+
+        map.addListener('click', function() {
+          closeInfoWindows();
+        });
+
+        addClick(Admin);
+        addClick(MillsOval);
+        addClick(BarbourOval);
+        addClick(WoodfordSheds);
+        addClick(OldBoysOval);
+        addClick(BoyceTaylorBoarding);
+        addClick(DTCentre);
+        addClick(DTCentre2);
+        addClick(MackintoshBoarding);
+        addClick(KentOval);
+        addClick(TrusteesOval);
+        addClick(ArtnDrama);
+        addClick(Roberts);
+        addClick(OBlock);
+        addClick(Heenan);
+        addClick(Library);
+        addClick(AssemblyHall);
+        addClick(Purves);
+        addClick(Barbour);
+        addClick(UniformShop);
+        addClick(Baynes);
+        addClick(SchoolHouse);
+        addClick(Pavilion);
+        addClick(ParentsCover);
+        addClick(HPEBlock);
+        addClick(TrenerryGym);
+        addClick(DiningHall);
+        addClick(Museum);
+        addClick(HealthCentre);
+        addClick(JuniorSchool);
+        addClick(StephensBoardingHouse);
+        addClick(GroomBoardingHouse);
+        addClick(CorfeBoardingHouse);
+        addClick(HughRose);
+        addClick(AquaticCentre);
+        addClick(OldHall);
+        addClick(TennisCourts);
+        addClick(BasketballCourts);
+        addClick(LearningLab);
+
+
+
+
+/*
+        var geolocation = new google.maps.InfoWindow({map: map});
+
+        if (navigator.geolocation) {
+          navigator.geolocation.getCurrentPosition(function(position) {
+            var pos = {
+              lat: position.coords.latitude,
+              lng: position.coords.longitude
+            };
+
+            geolocation.setPosition(pos);
+            geolocation.setContent('You are here.');
+            var you = new google.maps.Marker({
+              position: pos,
+              map: map,
+              title: 'You are here.',
+              icon: icons.You
+            });
+          }, function() {
+            handleLocationError(true, geolocation, map.getCenter());
+          });
+        } else {
+          // Browser doesn't support geolocation
+          handleLocationError(false, geolocation, map.getCenter());
+        }
+
+        function handleLocationError(browserHasGeolocation, infoWindow, pos) {
+          geolocation.setPosition(pos);
+          geolocation.setContent(browserHasGeolocation ?
+                              'Error: The Geolocation service failed.' :
+                              'Error: Your browser doesn\'t support geolocation.');
+        }
+*/
+        panorama = map.getStreetView();
+      }
+
+      function refreshPano() {
+        panorama.setPosition(locations[streetPos]);
+        panorama.setPov(({
+          heading: 265,
+          pitch: 0
+        }));
+        panorama.setVisible(true);
+      }
+
+      function toggleStreetView() {
+        var toggle = panorama.getVisible();
+        if (toggle == false) {
+          refreshPano();
+        } else {
+          refreshPano();
+          panorama.setVisible(false);
+        }
+      }
+
+      function left() {
+        if (streetPos > 0) {
+          streetPos = streetPos - 1;
+        }
+        console.log(locations[streetPos]);
+        refreshPano();
+      }
+
+      function right() {
+        if (streetPos < 13) {
+          streetPos = streetPos + 1;
+        }
+        console.log(locations[streetPos]);
+        refreshPano();
+      }
+    </script>
+    <script async defer
+    src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCldc-yCPzyLV4oG2OtZdqHONd-F0TGnoU&callback=initMap">
+    </script>
+  </body>
+</html>
