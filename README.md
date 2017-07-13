@@ -3,4 +3,7 @@ A virtual tour of TGS written in JavaScript and HTML using the Google Maps API a
 
 The project was written by @Pl4nty for the TGS Young Creator of the Year Award.
 
+Development has ended, but improvements can be committed to the dev branch.
+
 The Google Maps JavaScript API docs (https://developers.google.com/maps/documentation/javascript/) were invaluable during development.
+
